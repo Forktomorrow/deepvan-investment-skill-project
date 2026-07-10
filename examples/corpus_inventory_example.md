@@ -1,31 +1,40 @@
-# Corpus Inventory Example
+# Deepvan 原文库存报告
 
-Generated from the local working corpus on 2026-07-10.
+## 总览
 
-| Metric | Value |
+- 当前 profile 列表中的唯一 URL：307
+- 当前 profile 列表已缓存高置信原文：307
+- 缓存里全部高置信原文：321
+- 当前 profile 列表仍缺或未验证原文：0
+- 当前 profile 列表低置信缓存：0
+- 已发现 URL 的高置信全文覆盖率：1.0
+- 高置信原文日期范围：2024-07-23 ~ 2026-07-10
+- 正文字数：458645
+- 图片数：8165
+- 带 OCR 的原文数：53
+- OCR 字数：59222
+
+## Profile 列表时间覆盖
+
+| List | Items | Original Items | Min Date | Max Date |
+|---|---:|---:|---|---|
+| activity.json | 41 | 32 | 2026-06-30 | 2026-07-10 |
+| answers.json | 44 | 44 | 2026-06-23 | 2026-07-10 |
+| posts.json | 41 | 41 | 2024-06-11 | 2026-06-29 |
+| pins_deep_scroll.json | 222 | 222 | 2025-10-01 | 2026-07-10 |
+
+## 按年份分布
+
+| Year | Count |
 |---|---:|
-| Profile/source rows | 158 |
-| Discovered primary original URLs | 119 |
-| High-confidence cached primary originals | 119 |
-| All high-confidence cached originals | 134 |
-| Full-text coverage | 100% of currently discovered primary original URLs |
-| Missing/unverified primary originals | 0 |
-| Parsed cached date range | 2024-07-23 to 2026-07-10 |
-| Text characters | 256,952 |
-| Image URLs observed | 2,866 |
-| OCR-bearing rows | 53 |
-| OCR characters | 59,222 |
+| 2024 | 1 |
+| 2025 | 87 |
+| 2026 | 224 |
 
-Known gaps:
+## 口径说明
 
-- Current discovered primary profile URLs are fully cached.
-- A deep-scroll pass added 27 pin/thought originals from 2026-05 to 2026-06.
-- 2026 coverage is much denser than earlier years.
-- Article page shows 47 total articles; the stable captured post list currently contains 41 article cards.
-- 2025 and 2024 still require deeper profile pagination or alternate official/search discovery.
-
-Recommended next step:
-
-- Extend profile discovery to one year of original text.
-- Store only text and OCR output for older archive items.
-- Keep images only temporarily during OCR.
+- 日期优先取 `published`、`meta.timeText`、标题中的显式日期，不再从正文深处抓日期，避免被历史回顾和推荐阅读污染。
+- Profile 原文 URL 只取每条主页列表项的主 URL，不把文内“上期回答”等链接重复算入缺口。
+- Activity 中的“赞同了回答/文章”不计入 Deep Van 本人原文覆盖率。
+- 高置信原文只统计 Deep Van 本人原文，不把第三方内容混进去。
+- 这份报告回答的是“当前已发现 URL 抓全了没有”；不等于“2024-01 至今全量主页内容已证明发现完毕”。
