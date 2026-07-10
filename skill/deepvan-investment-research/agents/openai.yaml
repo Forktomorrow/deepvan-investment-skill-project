@@ -1,0 +1,4 @@
+interface:
+  display_name: "Deepvan Investment Research"
+  short_description: "Extract portfolio, skills, and credibility from creator research"
+  default_prompt: "Use $deepvan-investment-research to extract portfolio changes, research logic, and credibility fields from this creator post."

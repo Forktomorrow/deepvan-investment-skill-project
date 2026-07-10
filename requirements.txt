@@ -1,0 +1,2 @@
+# Core pipeline uses Python standard library only.
+# Optional OCR on macOS uses system tools: swiftc, sips, curl.
