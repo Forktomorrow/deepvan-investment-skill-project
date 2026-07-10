@@ -38,6 +38,29 @@ def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_alias_rules() -> list[dict]:
+    path = DATA_DIR / "asset_aliases.json"
+    if not path.exists():
+        path = ROOT.parent / "config" / "asset_aliases.example.json"
+    if not path.exists():
+        return []
+    return load_json(path).get("rules", [])
+
+
+def normalize_asset(asset: str, rules: list[dict]) -> dict:
+    raw = asset or ""
+    for rule in rules:
+        if re.search(rule["pattern"], raw, flags=re.I):
+            return {
+                "canonical_asset": rule["canonical"],
+                "symbol": rule.get("symbol", ""),
+                "asset_class": rule.get("asset_class", ""),
+                "proxy": rule.get("proxy", ""),
+                "data_status": "mapped" if rule.get("proxy") or rule.get("symbol") else "needs_data_mapping",
+            }
+    return {"canonical_asset": raw, "symbol": "", "asset_class": "Unknown", "proxy": "", "data_status": "unmapped"}
+
+
 def parse_date(text: str) -> str:
     for pattern in DATE_PATTERNS:
         m = pattern.search(text or "")
@@ -157,10 +180,10 @@ def looks_like_asset(line: str) -> bool:
     return any(ch.isalpha() or "\u4e00" <= ch <= "\u9fff" for ch in s)
 
 
-def extract_ocr_tables(row: dict) -> list[dict]:
+def extract_ocr_tables(row: dict, rules: list[dict]) -> list[dict]:
     lines = [ln.strip() for ln in row["ocr"].splitlines() if ln.strip()]
-    tables = extract_domestic_module_table(row, lines)
-    tables.extend(extract_simulated_capital_tables(row, lines))
+    tables = extract_domestic_module_table(row, lines, rules)
+    tables.extend(extract_simulated_capital_tables(row, lines, rules))
     for total_idx, line in enumerate(lines):
         if clean_asset_name(line) != "总和":
             continue
@@ -198,11 +221,13 @@ def extract_ocr_tables(row: dict) -> list[dict]:
         portfolio_id = infer_portfolio_id(row["title"], "\n".join(lines[max(0, total_idx - 40) : min(len(lines), ratio_idx + 20)]))
         holdings = []
         for asset, (raw_pct, weight) in zip(assets, weights):
+            norm = normalize_asset(asset, rules)
             holdings.append(
                 {
                     "date": row["date"],
                     "portfolio_id": portfolio_id,
                     "asset": asset,
+                    **norm,
                     "weight": round(weight, 6),
                     "weight_text": raw_pct.replace("%6", "%"),
                     "source_title": row["title"],
@@ -218,7 +243,7 @@ def extract_ocr_tables(row: dict) -> list[dict]:
     return tables
 
 
-def extract_simulated_capital_tables(row: dict, lines: list[str]) -> list[dict]:
+def extract_simulated_capital_tables(row: dict, lines: list[str], rules: list[dict]) -> list[dict]:
     starts = [i for i, ln in enumerate(lines) if "模拟初始资金" in ln]
     tables = []
     for bi, start in enumerate(starts):
@@ -262,11 +287,13 @@ def extract_simulated_capital_tables(row: dict, lines: list[str]) -> list[dict]:
         portfolio_id = infer_portfolio_id(row["title"], "\n".join(block[:80]))
         holdings = []
         for asset, (raw_pct, weight) in zip(assets, weights):
+            norm = normalize_asset(asset, rules)
             holdings.append(
                 {
                     "date": row["date"],
                     "portfolio_id": portfolio_id,
                     "asset": asset,
+                    **norm,
                     "weight": round(weight, 6),
                     "weight_text": raw_pct.replace("%6", "%"),
                     "source_title": row["title"],
@@ -295,7 +322,7 @@ def choose_weight_window(pcts: list[tuple[str, float]], n: int) -> list[tuple[st
     return candidates[0][2]
 
 
-def extract_domestic_module_table(row: dict, lines: list[str]) -> list[dict]:
+def extract_domestic_module_table(row: dict, lines: list[str], rules: list[dict]) -> list[dict]:
     if "内地版" not in row["title"] and "公募基金版" not in row["title"]:
         return []
     text = "\n".join(lines)
@@ -313,11 +340,13 @@ def extract_domestic_module_table(row: dict, lines: list[str]) -> list[dict]:
     group_id = f"{row['id']}:domestic_modules"
     rows = []
     for asset, weight, note in holdings:
+        norm = normalize_asset(asset, rules)
         rows.append(
             {
                 "date": row["date"],
                 "portfolio_id": "叫兽指数内地版/公募基金版",
                 "asset": asset,
+                **norm,
                 "weight": round(weight, 6),
                 "weight_text": f"{weight:.2%}",
                 "source_title": row["title"],
@@ -511,6 +540,7 @@ def main() -> None:
     parser.add_argument("--out-prefix", default=str(DATA_DIR / "portfolio_timeline"))
     args = parser.parse_args()
     articles = iter_articles()
+    rules = load_alias_rules()
     candidates = []
     holdings = []
     events = []
@@ -518,13 +548,13 @@ def main() -> None:
         score_text = row["title"] + "\n" + row["text"][:4000] + "\n" + row["ocr"][:2000]
         if any(k in score_text for k in PORTFOLIO_MARKERS):
             candidates.append({"date": row["date"], "title": row["title"], "url": row["url"], "id": row["id"]})
-        for table in extract_ocr_tables(row):
+        for table in extract_ocr_tables(row, rules):
             holdings.extend(table["holdings"])
         events.extend(extract_text_events(row))
     holdings = dedupe_dicts(holdings, ["date", "portfolio_id", "asset", "weight", "source_url", "group_id"])
     events = dedupe_dicts(events, ["date", "portfolio_id", "event_type", "action", "asset", "from_weight", "to_weight", "source_url"])
     prefix = Path(args.out_prefix)
-    write_csv(prefix.with_suffix(".holdings.csv"), holdings, ["date", "portfolio_id", "asset", "weight", "weight_text", "source_title", "source_url", "source_id", "group_id", "evidence", "confidence", "table_total"])
+    write_csv(prefix.with_suffix(".holdings.csv"), holdings, ["date", "portfolio_id", "asset", "canonical_asset", "symbol", "asset_class", "proxy", "data_status", "weight", "weight_text", "source_title", "source_url", "source_id", "group_id", "evidence", "confidence", "table_total"])
     write_csv(prefix.with_suffix(".events.csv"), events, ["date", "portfolio_id", "event_type", "action", "asset", "from_weight", "to_weight", "reason", "sentence", "source_title", "source_url", "source_id", "confidence"])
     write_csv(prefix.with_suffix(".candidates.csv"), candidates, ["date", "title", "url", "id"])
     report = REPORT_DIR / f"portfolio_timeline_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
