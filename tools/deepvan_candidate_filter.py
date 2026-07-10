@@ -19,7 +19,7 @@ INVESTMENT_KEYWORDS = [
     "标普", "纳指", "日韩", "日经", "韩国", "SHV", "TLT", "南方东西精选", "红利",
 ]
 
-ACTION_MARKERS = ["回答了问题", "发布了文章", "发布了想法"]
+ACTION_MARKERS = ["回答了问题", "发布了文章", "发布了想法", "发布于"]
 IGNORE_MARKERS = ["赞同了回答", "收藏了", "关注了", "赞同了文章"]
 
 
@@ -96,7 +96,14 @@ def main() -> None:
     parser.add_argument("--out", default=str(DATA_DIR / "profile_candidates.json"))
     args = parser.parse_args()
     profile_dir = Path(args.profile_dir)
-    rows = load_profile_lists([profile_dir / "activity.json", profile_dir / "answers.json", profile_dir / "posts.json"])
+    rows = load_profile_lists(
+        [
+            profile_dir / "activity.json",
+            profile_dir / "answers.json",
+            profile_dir / "posts.json",
+            profile_dir / "pins_deep_scroll.json",
+        ]
+    )
     candidates = filter_candidates(rows, args.limit)
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)

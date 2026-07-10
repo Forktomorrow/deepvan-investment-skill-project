@@ -31,7 +31,14 @@ def read_json(path: Path, default):
 
 def build_candidates(limit: int) -> list[dict]:
     profile_dir = DATA_DIR / "profile_lists"
-    rows = candidate_filter.load_profile_lists([profile_dir / "activity.json", profile_dir / "answers.json", profile_dir / "posts.json"])
+    rows = candidate_filter.load_profile_lists(
+        [
+            profile_dir / "activity.json",
+            profile_dir / "answers.json",
+            profile_dir / "posts.json",
+            profile_dir / "pins_deep_scroll.json",
+        ]
+    )
     candidates = candidate_filter.filter_candidates(rows, limit)
     write_json(DATA_DIR / "profile_candidates.json", candidates)
     return candidates

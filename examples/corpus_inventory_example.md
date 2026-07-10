@@ -4,23 +4,25 @@ Generated from the local working corpus on 2026-07-10.
 
 | Metric | Value |
 |---|---:|
-| Loose profile list rows | 126 |
-| Canonical original URLs | 101 |
-| Cached originals | 106 |
-| Full-text coverage | 100% of current canonical profile URLs |
-| Missing canonical originals | 0 |
+| Profile/source rows | 158 |
+| Discovered primary original URLs | 119 |
+| High-confidence cached primary originals | 119 |
+| All high-confidence cached originals | 134 |
+| Full-text coverage | 100% of currently discovered primary original URLs |
+| Missing/unverified primary originals | 0 |
 | Parsed cached date range | 2024-07-23 to 2026-07-10 |
-| Text characters | 271,264 |
-| Image URLs observed | 2,078 |
+| Text characters | 256,952 |
+| Image URLs observed | 2,866 |
 | OCR-bearing rows | 53 |
 | OCR characters | 59,222 |
 
 Known gaps:
 
-- Current discovered profile URLs are fully cached.
+- Current discovered primary profile URLs are fully cached.
+- A deep-scroll pass added 27 pin/thought originals from 2026-05 to 2026-06.
 - 2026 coverage is much denser than earlier years.
-- 2025 and 2024 require deeper profile pagination beyond the currently captured profile lists.
-- Some missing originals are non-investment posts; cache them for thinking/style analysis, then filter for投研 scoring.
+- Article page shows 47 total articles; the stable captured post list currently contains 41 article cards.
+- 2025 and 2024 still require deeper profile pagination or alternate official/search discovery.
 
 Recommended next step:
 

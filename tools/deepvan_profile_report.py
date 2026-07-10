@@ -25,8 +25,15 @@ def parse_date(text: str) -> dt.date | None:
         return None
     m = re.search(r"(20\d{2})[-年](\d{1,2})[-月](\d{1,2})", text)
     if not m:
+        m = re.search(r"(20\d{2})[./](\d{1,2})[./](\d{1,2})", text)
+        if not m:
+            m = re.search(r"(20\d{2})(\d{2})(\d{2})", text)
+    if not m:
         return None
-    return dt.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    try:
+        return dt.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    except ValueError:
+        return None
 
 
 def clean_title(title: str) -> str:
@@ -64,7 +71,7 @@ def iter_original_pages(paths: list[Path]) -> list[dict]:
                 ocr_text = ocr_text_path.read_text(encoding="utf-8", errors="ignore").strip()
                 if ocr_text:
                     text = text + "\n\n[OCR_IMAGE_TEXT]\n" + ocr_text
-            date = parse_date(data.get("published", "")) or parse_date(meta.get("timeText", "")) or parse_date(data.get("title", "")) or parse_date(text[:1600])
+            date = parse_date(data.get("published", "")) or parse_date(meta.get("timeText", "")) or parse_date(data.get("title", ""))
             rows.append(
                 {
                     "id": article.parent.name,
