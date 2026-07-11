@@ -127,6 +127,22 @@ def domestic_snapshots() -> list[list[dict]]:
     return [groups[d] for d in sorted(groups)]
 
 
+def official_nav_series() -> list[tuple[dt.date, float]]:
+    path = DATA_DIR / "official_nav_points.csv"
+    if not path.exists():
+        return []
+    rows = read_csv(path)
+    best: dict[dt.date, float] = {}
+    for row in rows:
+        try:
+            day = parse_date(row["date"])
+            nav = float(row["nav"])
+        except Exception:
+            continue
+        best[day] = nav if day not in best else max(best[day], nav)
+    return sorted(best.items())
+
+
 def compress_daily(navs: list[tuple[dt.date, float]]) -> list[tuple[dt.date, float]]:
     dedup = {}
     for day, value in navs:
@@ -183,12 +199,12 @@ def svg_chart(series: dict[str, list[tuple[dt.date, float]]], out: Path) -> None
     def y(value: float) -> float:
         return top + (max_v - value) / span_v * (height - top - bottom)
 
-    colors = {"叫兽指数国际版/全球版": "#2563eb", "叫兽指数内地版/代理口径": "#dc2626"}
+    colors = {"叫兽指数官方净值点": "#111827", "国际版持仓重建": "#2563eb", "内地版代理口径": "#dc2626"}
     lines = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="#ffffff"/>',
         '<text x="80" y="30" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">Deepvan 组合净值曲线</text>',
-        '<text x="80" y="52" font-family="Arial, sans-serif" font-size="13" fill="#6b7280">国际版为完整 OCR 持仓回测；内地版为 OCR 明确权重的代理口径。</text>',
+        '<text x="80" y="52" font-family="Arial, sans-serif" font-size="13" fill="#6b7280">黑线为原文官方净值点；蓝线为国际版持仓重建；红线为内地版代理口径。</text>',
     ]
     for i in range(6):
         val = min_v + span_v * i / 5
@@ -221,7 +237,12 @@ def write_dashboard() -> None:
     holdings = read_csv(DATA_DIR / "portfolio_timeline.holdings.csv")
     intl = holdings_nav(group_by_snapshot(holdings, "叫兽指数国际版/全球版"), end)
     dom = holdings_nav(domestic_snapshots(), dt.date(2026, 6, 29))
-    series = {"叫兽指数国际版/全球版": intl, "叫兽指数内地版/代理口径": dom}
+    official = official_nav_series()
+    series = {}
+    if official:
+        series["叫兽指数官方净值点"] = official
+    series["国际版持仓重建"] = intl
+    series["内地版代理口径"] = dom
     stats = {name: metrics(rows) for name, rows in series.items()}
     ASSET_DIR.mkdir(exist_ok=True)
     REPORT_DIR.mkdir(exist_ok=True)
@@ -248,7 +269,8 @@ def write_dashboard() -> None:
         "",
         "## 口径",
         "",
-        "- 国际版：使用 OCR 完整持仓表和可取行情代理重建，已覆盖主要美股/港股 ETF 与个股。",
+        "- 官方净值点：从 Deep Van 原文正文前段抽取，排除评论、推荐阅读和单只基金行情软件净值。",
+        "- 国际版持仓重建：使用 OCR 完整持仓表和可取行情代理重建，已覆盖主要美股/港股 ETF 与个股；最早稳定完整表为 2025-04-24，不代表组合成立日。",
         "- 内地版：使用图片 OCR 拆出的 2026-02-24、2026-03-09、2026-03-19 子模块；现金/短债按 0 收益，量化用 ASHR 代理，QDII 子池用 QQQ/DXJ/XLE 等代理。",
         "- 2026-06-29 内地版仍有 75% `台美日韩港混合QDII` 合并桶，底层比例为自定义，因此不把 6/29 之后硬接成精确净值。",
         "",
