@@ -157,15 +157,24 @@ def process_article(article: Path, max_images: int) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dirs", nargs="+", default=[str(DATA_DIR / "original_pages_recent"), str(DATA_DIR / "original_pages")])
+    parser.add_argument("--articles", nargs="+", help="Specific article.json files or article directories to process.")
     parser.add_argument("--max-images-per-article", type=int, default=8)
     parser.add_argument("--limit", type=int, default=50)
     args = parser.parse_args()
 
     articles: list[Path] = []
-    for d in args.dirs:
-        base = Path(d)
-        if base.exists():
-            articles.extend(sorted(base.glob("*/article.json")))
+    if args.articles:
+        for item in args.articles:
+            path = Path(item)
+            if path.is_dir():
+                path = path / "article.json"
+            if path.exists():
+                articles.append(path)
+    else:
+        for d in args.dirs:
+            base = Path(d)
+            if base.exists():
+                articles.extend(sorted(base.glob("*/article.json")))
     summaries = []
     for article in articles[: args.limit]:
         summaries.append(process_article(article, args.max_images_per_article))
