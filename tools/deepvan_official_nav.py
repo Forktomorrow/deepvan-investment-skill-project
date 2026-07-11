@@ -108,6 +108,12 @@ def extract_nav_points() -> list[dict]:
                         if "从1.000开始" in context or "单位净值" in context or "实时参考净值" in context:
                             continue
                         date = nav_date_from_context(context, fallback_date)
+                        if value_i == 0 and "目前净值" in context:
+                            date = fallback_date
+                        if value_i == 1 and "上期" in context:
+                            explicit = parse_date_text(context)
+                            if explicit:
+                                date = explicit
                         # For ordinary "from A -> B" updates, B is the current
                         # official NAV. A is kept only when the context names it
                         # as 年初/年末/上期 with a date; otherwise it is reference
