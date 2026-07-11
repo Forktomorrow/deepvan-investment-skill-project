@@ -797,9 +797,13 @@ def send_webhook(text: str, config: dict) -> None:
     url = os.environ.get(env_name)
     if not url:
         return
-    provider = config.get("alert", {}).get("provider", "")
+    provider = (config.get("alert", {}).get("provider", "") or "").lower()
     if provider == "feishu" or "open.feishu.cn/open-apis/bot" in url:
         payload = {"msg_type": "text", "content": {"text": text}}
+    elif provider in {"qq", "qqbot"}:
+        payload = {"msg_type": "text", "content": {"text": text}}
+    elif provider == "generic_json":
+        payload = {"text": text, "source": "deepvan_monitor"}
     else:
         payload = {"text": text}
     subprocess.run(

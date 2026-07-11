@@ -1,0 +1,28 @@
+{
+  "alert": {
+    "provider": "feishu",
+    "webhook_url_env": "DEEPVAN_NOTIFY_WEBHOOK",
+    "min_vote_up": 0
+  },
+  "monitor_query_limit": 80,
+  "daily_budget": 1000,
+  "portfolio_keywords": [
+    "叫兽指数",
+    "内地版",
+    "国际版",
+    "全球版",
+    "纯A",
+    "公募基金版",
+    "调仓",
+    "持仓",
+    "加仓",
+    "减仓",
+    "清仓",
+    "止盈",
+    "止损"
+  ],
+  "source_policy": {
+    "primary_author_names": ["Deep Van"],
+    "portfolio_fact_sources": "primary_only"
+  }
+}

@@ -8,6 +8,17 @@
 
 > 免责声明：本项目只做公开内容整理、结构化抽取和历史复盘，不构成投资建议。
 
+## 项目面板
+
+![Deepvan 组合净值曲线](assets/portfolio_nav.svg)
+
+| 组合 | 区间 | 净值 | 总收益 | 年化 | 年化波动 | 最大回撤 | Sharpe-like |
+|---|---|---:|---:|---:|---:|---:|---:|
+| 叫兽指数国际版/全球版 | 2025-04-24 ~ 2026-07-10 | 1.2527 | 25.27% | 20.45% | 9.45% | -8.22% | 2.16 |
+| 叫兽指数内地版/代理口径 | 2026-02-24 ~ 2026-06-29 | 1.0097 | 0.97% | 2.87% | 9.11% | -4.54% | 0.32 |
+
+国际版来自 OCR 完整持仓表；内地版来自图片 OCR 拆出的明确权重，现金/短债按 0 收益，A股量化暂用 ASHR 代理。2026-06-29 内地版仍有 `台美日韩港混合QDII 75%` 合并桶，底层比例是自定义，所以暂时不把 6/29 之后硬接成精确净值。
+
 ## 当前数据面
 
 截至 2026-07-10，本地已完成一轮公开语料体检。
@@ -181,8 +192,10 @@ python3 tools/deepvan_portfolio_backtest.py
 data/portfolio_timeline.holdings.csv
 data/portfolio_timeline.events.csv
 data/portfolio_backtest.decisions.csv
+data/portfolio_dashboard.metrics.json
 reports/portfolio_summary_*.md
 reports/portfolio_backtest_*.md
+assets/portfolio_nav.svg
 ```
 
 示例报告在 `examples/`：
@@ -190,7 +203,27 @@ reports/portfolio_backtest_*.md
 - `portfolio_summary_example.md`
 - `portfolio_timeline_example.md`
 - `portfolio_backtest_example.md`
+- `portfolio_dashboard_example.md`
 - `corpus_inventory_example.md`
+
+## 调仓监控
+
+监控入口是：
+
+```bash
+export ZH_TOKEN="你的知乎开发者 API Key"
+export DEEPVAN_NOTIFY_WEBHOOK="你的飞书/QQ/通用 webhook"
+
+python3 tools/deepvan_monitor.py monitor --config config.example.json
+```
+
+通知配置在 `config/notify.example.json`。当前支持：
+
+- `feishu`：飞书自定义机器人
+- `qq` / `qqbot`：常见 QQ bot 文本 webhook
+- `generic_json`：通用 JSON webhook
+
+详细配置见 `docs/monitoring.md`。关键词、查询预算、证据口径、webhook 环境变量都可以调。
 
 ## 还没做完的地方
 
